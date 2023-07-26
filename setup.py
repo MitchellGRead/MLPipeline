@@ -10,6 +10,8 @@ docs_packages = ["mkdocs==1.3.0", "mkdocstrings==0.18.1"]
 
 style_packages = ["black==22.3.0", "flake8==6.0.0", "Flake8-pyproject==1.2.3", "isort==5.12.0"]
 
+dev_packages = ["pre-commit-3.3.3"]
+
 setup(
     name="tagifai",
     version=0.1,
@@ -19,5 +21,5 @@ setup(
     url="https://madewithml.com/",
     python_requires=">=3.10",
     install_requires=[required_packages],
-    extras_require={"dev": docs_packages + style_packages, "docs": docs_packages},
+    extras_require={"dev": docs_packages + style_packages + dev_packages, "docs": docs_packages},
 )
