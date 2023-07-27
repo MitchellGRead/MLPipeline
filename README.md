@@ -1,4 +1,7 @@
 
+# ML Pipeline
+A Machine Learning automation pipeline
+
 # Virtual Environment
 ```bash
 make venv
@@ -6,12 +9,12 @@ make venv
 
 # Dev Setup
 ```bash
-python3 -m pip install -e ".[dev]"
+make dev
 ```
 
 # Docs Setup
 ```bash
-python3 -m pip install -e ".[docs]"
+make docs
 python3 -m mkdocs new .
 python3 -m mkdocs serve
 ```

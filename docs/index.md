@@ -3,9 +3,8 @@
 - [Workflows](tagifai/main.md): main workflows.
 - [tagifai](tagifai/data.md): documentation of functionality.
 
-## MLOps Lessons
+## Mission
 
-Learn how to combine machine learning with software engineering to develop, deploy & maintain production ML applications.
+To create modularized and accurate ML models and scale.
 
-- Lessons: [https://madewithml.com/](https://madewithml.com/#mlops)
 - Code: [GokuMohandas/mlops-course](https://github.com/GokuMohandas/mlops-course)
