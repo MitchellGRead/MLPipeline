@@ -1,6 +1,5 @@
 site_name: Everything Ai
-site_url: https://madewithml.com/
-repo_url: https://github.com/GokuMohandas/mlops-course/
+repo_url: https://github.com/demo-ai-labs/MLPipeline
 nav:
   - Home: index.md
   - workflows:

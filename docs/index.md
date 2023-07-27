@@ -7,4 +7,4 @@
 
 To create modularized and accurate ML models and scale.
 
-- Code: [GokuMohandas/mlops-course](https://github.com/GokuMohandas/mlops-course)
+- Code: [Everything Ai](https://github.com/demo-ai-labs/MLPipeline)
