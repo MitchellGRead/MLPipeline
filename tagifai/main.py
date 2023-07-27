@@ -116,7 +116,7 @@ def optimize(
     logger.info(f"Best hyperparameters: {json.dumps(study.best_trial.params, indent=2)}")
 
 
-def predict_tag(text: str, run_id=None) -> Dict[str, Any]:
+def predict_tag(text: str, run_id=None) -> Dict[str, str]:
     """Predict tag for text
 
     Args:
@@ -124,7 +124,7 @@ def predict_tag(text: str, run_id=None) -> Dict[str, Any]:
         run_id (str, optional): Model run id to use for prediction. Defaults to None. Grabs run id from config run_id.txt if None.
 
     Returns:
-        Dict[str, Any]: Json object containing primary model artifacts
+        Dict[str, str]: Json object of input text and the predicted tag for it
     """
     if not run_id:
         run_id = open(Path(config.CONFIG_DIR, "run_id.txt")).read()

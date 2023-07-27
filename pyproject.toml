@@ -32,3 +32,13 @@ max-line-length = 79
 # E501: Line too long
 # W503: Line break occurred before binary operator
 # E226: Missing white space around arithmetic operator
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "--strict-markers --disable-pytest-warnings"
+
+
+[tool.coverage.run]
+omit=["tagifai/evaluate.py", "tagifai/main"]

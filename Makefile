@@ -3,11 +3,16 @@ SHELL = /bin/bash
 .PHONY: help
 help:
 	@echo "Commands:"
-	@echo "venv    : creates a virtual environment."
-	@echo "dev     : creates a virtual environment and sets up dev dependencies."
-	@echo "docs    : creates a virtual environment and sets up doc dependencies."
-	@echo "style   : executes style formatting."
-	@echo "clean   : cleans all unnecessary files."
+	@echo "venv           	 : creates a virtual environment."
+	@echo "dev            	 : creates a virtual environment and sets up dev dependencies."
+	@echo "docs           	 : creates a virtual environment and sets up doc dependencies."
+	@echo "style          	 : executes style formatting."
+	@echo "clean          	 : cleans all unnecessary files."
+	@echo "precommitall   	 : runs pre-commit hooks on all files."
+	@echo "gentestcoverage   : generate unit test coverage report."
+	@echo "runallcodetest    : run all code tests"
+	@echo "rundatatest       : run data tests with data location pointing to ./data/labeled_projects"
+	@echo "runmodeltest      : run model tests a provided run id. ex: make run=<id> runmodeltest"
 
 .ONESHELL:
 venv:
@@ -48,3 +53,20 @@ clean: style
 .PHONY: precommitall
 precommitall:
 	pre-commit run --all-files
+
+.PHONY: gentestcoverage
+gentestcoverage:
+	pytest tests/ --cov tagifai --cov-report html --disable-warnings && \
+	coverage report -m
+
+.PHONY: runallcodetest
+runallcodetest:
+	pytest tests/code
+
+.PHONY: rundatatest
+rundatatest:
+	pytest --dataset-loc="./data/labeled_projects.csv" tests/data --verbose --disable-warnings
+
+.PHONY: runmodeltest
+runmodeltest:
+	pytest --run-id=$(run) tests/model --verbose --disable-warnings

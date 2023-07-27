@@ -18,3 +18,9 @@ repos:
         args: ["clean"]
         language: system
         pass_filenames: false
+    -   id: style
+        name: style
+        entry: make
+        args: ["style"]
+        language: system
+        pass_filenames: false
