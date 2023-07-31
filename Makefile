@@ -8,6 +8,7 @@ help:
 	@echo "docs           	 : creates a virtual environment and sets up doc dependencies."
 	@echo "style          	 : executes style formatting."
 	@echo "clean          	 : cleans all unnecessary files."
+	@echo "servemlflow    	 : serves the mlflow dashboard."
 	@echo "precommitall   	 : runs pre-commit hooks on all files."
 	@echo "gentestcoverage   : generate unit test coverage report."
 	@echo "runallcodetest    : run all code tests"
@@ -27,6 +28,8 @@ dev:
 	source venv/bin/activate && \
 	python3 -m pip install pip setuptools wheel && \
 	python3 -m pip install -e ".[dev]"
+	pre-commit install
+	pre-commit autoupdate
 
 .ONESHELL:
 docs:
@@ -49,6 +52,10 @@ clean: style
 	find . | grep -E ".ipynb_checkpoints" | xargs rm -rf
 	find . | grep -E ".trash" | xargs rm -rf
 	rm -f .coverage
+
+.PHONY: servemlflow
+servemlflow:
+	mlflow server -h 0.0.0.0 -p 8080 --backend-store-uri ./stores/model
 
 .PHONY: precommitall
 precommitall:
