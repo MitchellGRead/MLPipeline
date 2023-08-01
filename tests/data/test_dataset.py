@@ -1,6 +1,3 @@
-import json
-
-
 def test_preprocessed_dataset(df):
     """Test dataset quality and integrity."""
     column_list = ["id", "created_on", "title", "description", "tag", "text"]

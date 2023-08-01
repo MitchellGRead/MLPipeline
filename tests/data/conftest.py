@@ -16,4 +16,4 @@ def pytest_addoption(parser):
 def df(request):
     dataset_loc = request.config.getoption("--dataset-loc")
     df = ge.dataset.PandasDataset(pd.read_csv(dataset_loc))
-    return data.preprocess(df, lower=True, stem=False, min_freq=75)
+    return data.preprocess_data(df, lower=True, stem=False, min_freq=75)

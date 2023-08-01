@@ -26,8 +26,12 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_REGISTRY.mkdir(parents=True, exist_ok=True)
 
+# Uris
+MLFLOW_TRACKING_URI = f"file://{MODEL_REGISTRY.absolute()}"
+ARGS_URI = "./args.json"
+
 # MLFlow model registry
-mlflow.set_tracking_uri(f"file://{MODEL_REGISTRY.absolute()}")
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 # Logger setup
 logging_config = {
