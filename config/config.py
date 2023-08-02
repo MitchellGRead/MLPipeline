@@ -28,7 +28,7 @@ MODEL_REGISTRY.mkdir(parents=True, exist_ok=True)
 
 # Uris
 MLFLOW_TRACKING_URI = f"file://{MODEL_REGISTRY.absolute()}"
-ARGS_URI = "./args.json"
+ARGS_URI = Path(CONFIG_DIR, "args.json")
 
 # MLFlow model registry
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)

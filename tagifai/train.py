@@ -1,5 +1,4 @@
 import json
-from argparse import Namespace
 from datetime import datetime
 
 import mlflow
@@ -299,7 +298,7 @@ def train_model(
         cpu_per_worker (int, optional): number of CPUs to use per worker. Defaults to 1.
         gpu_per_worker (int, optional): number of GPUs to use per worker. Defaults to 0.
         num_samples (int, optional): number of samples to use from dataset.
-            If this is passed in, it will override the config. Defaults to None.
+            If this is passed in, it will override the config. Defaults to None (takes all samples).
         num_epochs (int, optional): number of epochs to train for.
             If this is passed in, it will override the config. Defaults to None.
         batch_size (int, optional): number of samples per batch.
@@ -312,14 +311,14 @@ def train_model(
 
     # Set up args config
     config_loc = train_config_loc if train_config_loc else ARGS_URI
-    args_config = Namespace(**utils.load_dict(filepath=config_loc))
+    args_config = utils.load_dict(filepath=config_loc)
     args_config["num_samples"] = num_samples
     args_config["num_epochs"] = num_epochs
     args_config["batch_size"] = batch_size
     logger.info(
         f"Training for {experiment_name} with data from {dataset_loc}. Results written to {results_fp}."
     )
-    logger.info(f"Starting training with args --> \n {json.dumps(args_config, indent=2)}")
+    logger.info(f"Starting training with args --> \n{json.dumps(args_config, indent=2)}")
 
     # Set up scaling config
     scaling_config = ScalingConfig(

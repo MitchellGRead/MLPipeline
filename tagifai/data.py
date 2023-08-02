@@ -27,7 +27,7 @@ def load_data(dataset_loc: str, num_samples: int = None) -> Dataset:
         Dataset: Data represented as a Ray Dataset
     """
     data = ray.data.read_csv(dataset_loc)
-    data = ray.random_shuffle(seed=1234)
+    data = data.random_shuffle(seed=1234)
     data = ray.data.from_items(data.take(num_samples)) if num_samples else data
     return data
 
@@ -151,7 +151,7 @@ def tokenize(batch: dict) -> dict:
     encoded_inputs = tokenizer(batch["text"].tolist(), return_tensors="np", padding="longest")
     return dict(
         ids=encoded_inputs["input_ids"],
-        masks=encoded_inputs["attention_masks"],
+        masks=encoded_inputs["attention_mask"],
         targets=np.array(batch["tag"]),
     )
 

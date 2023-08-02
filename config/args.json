@@ -11,6 +11,6 @@
   "learning_rate_patience": 3,
   "learning_rate_factor": 0.8,
   "power_t": 0.24339162308979098,
-  "num_epochs": 100,
+  "num_epochs": 10,
   "threshold": 0.6891023158849614
 }

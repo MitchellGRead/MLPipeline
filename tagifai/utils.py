@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from ray.train.torch import get_device
 
+from config.config import logger
+
 
 def load_dict(filepath: str) -> dict:
     """Load a dictionary from a JSON's filepath.
@@ -47,13 +49,15 @@ def set_seeds(seed=42):
     Args:
         seed (int, optional): Seed value to use. Defaults to 42.
     """
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    eval("setattr(torch.backends.cudnn, 'deterministic', True)")
-    eval("setattr(torch.backends.cudnn, 'benchmark', False)")
-    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
 def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
@@ -91,6 +95,10 @@ def collate_fn(
     tensor_batch = {}
     for key, array in batch.items():
         tensor_batch[key] = torch.as_tensor(array, dtype=dtypes[key], device=get_device())
+
+    logger.info(tensor_batch["ids"].size())
+    logger.info(tensor_batch["masks"].size())
+    logger.info(tensor_batch["targets"].size())
     return tensor_batch
 
 
