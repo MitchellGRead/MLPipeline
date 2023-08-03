@@ -198,7 +198,7 @@ def train_model(
     # Set up
     if results_loc:
         training_result_loc = Path(
-            results_loc, f'{experiment_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
+            results_loc, "training", experiment_name, datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         )
         utils.create_dir(training_result_loc)
     else:
@@ -262,7 +262,6 @@ def train_model(
     val_ds = val_ds.materialize()
 
     # Trainer
-    logger.info("Starting training session")
     trainer = TorchTrainer(
         train_loop_per_worker=train_loop_per_worker,
         train_loop_config=train_loop_config,
@@ -274,6 +273,7 @@ def train_model(
     )
 
     # Train
+    logger.info("Starting training session")
     results = trainer.fit()
     results_data = {
         "timestamp": datetime.now().strftime("%B %d, %Y %I:%M:%S %p"),

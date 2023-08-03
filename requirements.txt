@@ -13,6 +13,7 @@ rich==12.4.4
 ray[air]==2.6.1
 transformers==4.28.1
 torch==2.0.1
+hyperopt==0.2.7
 
 # Testing
 pytest==7.4.0
