@@ -1,54 +1,20 @@
 import json
 import os
 import random
-from typing import Any
+from typing import Any, Dict, List
 
-import mlflow
 import numpy as np
 import torch
+from ray.data import DatasetContext
 from ray.train.torch import get_device
 
-from config.config import logger
+from config.config import mlflow
+
+DatasetContext.get_current().execution_options.preserve_order = True
 
 
-def load_dict(filepath: str) -> dict:
-    """Load a dictionary from a JSON's filepath.
-
-    Args:
-        filepath (str): location of file.
-
-    Returns:
-        Dict: loaded JSON data.
-    """
-    with open(filepath, "r") as fp:
-        d = json.load(fp)
-    return d
-
-
-def save_dict(d: dict, filepath: str, cls: Any = None, sortkeys: bool = False):
-    """Save a dictionary to a specific location
-
-    Args:
-        d (dict): dictionary to save
-        filepath (str): filepath to save dictionary to
-        cls (Any, optional): encoder to use on dict data. Defaults to None.
-        sortkeys (bool, optional): whether to sort keys alphabetically. Defaults to False.
-    """
-    directory = os.path.dirname(filepath)
-    if directory and not os.path.exists(directory):  # pragma: no cover
-        os.makedirs(directory)
-
-    with open(filepath, "w") as fp:
-        json.dump(d, indent=2, fp=fp, cls=cls, sort_keys=sortkeys)
-        fp.write("\n")
-
-
-def set_seeds(seed=42):
-    """Set seed for reproducibility.
-
-    Args:
-        seed (int, optional): Seed value to use. Defaults to 42.
-    """
+def set_seeds(seed: int = 42):
+    """Set seeds for reproducibility."""
     np.random.seed(seed)
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -58,6 +24,37 @@ def set_seeds(seed=42):
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+
+
+def load_dict(path: str) -> Dict:
+    """Load a dictionary from a JSON's filepath.
+
+    Args:
+        path (str): location of file.
+
+    Returns:
+        Dict: loaded JSON data.
+    """
+    with open(path) as fp:
+        d = json.load(fp)
+    return d
+
+
+def save_dict(d: Dict, path: str, cls: Any = None, sortkeys: bool = False) -> None:
+    """Save a dictionary to a specific location.
+
+    Args:
+        d (Dict): data to save.
+        path (str): location of where to save the data.
+        cls (optional): encoder to use on dict data. Defaults to None.
+        sortkeys (bool, optional): whether to sort keys alphabetically. Defaults to False.
+    """
+    directory = os.path.dirname(path)
+    if directory and not os.path.exists(directory):  # pragma: no cover
+        os.makedirs(directory)
+    with open(path, "w") as fp:
+        json.dump(d, indent=2, fp=fp, cls=cls, sort_keys=sortkeys)
+        fp.write("\n")
 
 
 def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
@@ -79,15 +76,15 @@ def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
 
 
 def collate_fn(
-    batch: dict[str, np.ndarray]
-) -> dict[str, torch.Tensor]:  # pragma: no cover, Ray air internal
-    """Convert a batch of numpy arrays to tensors (with appropriate padding)
+    batch: Dict[str, np.ndarray]
+) -> Dict[str, torch.Tensor]:  # pragma: no cover, air internal
+    """Convert a batch of numpy arrays to tensors (with appropriate padding).
 
     Args:
-        batch (dict[str, np.ndarray]): input batch as a dictionary of numpy arrays
+        batch (Dict[str, np.ndarray]): input batch as a dictionary of numpy arrays.
 
     Returns:
-        dict[str, torch.Tensor]: output batch as a dictionary of tensors
+        Dict[str, torch.Tensor]: output batch as a dictionary of tensors.
     """
     batch["ids"] = pad_array(batch["ids"])
     batch["masks"] = pad_array(batch["masks"])
@@ -95,10 +92,6 @@ def collate_fn(
     tensor_batch = {}
     for key, array in batch.items():
         tensor_batch[key] = torch.as_tensor(array, dtype=dtypes[key], device=get_device())
-
-    logger.info(tensor_batch["ids"].size())
-    logger.info(tensor_batch["masks"].size())
-    logger.info(tensor_batch["targets"].size())
     return tensor_batch
 
 
@@ -121,7 +114,7 @@ def get_run_id(
     return run.run_id
 
 
-def dict_to_list(data: dict, keys: list[str]) -> list[dict[str, Any]]:
+def dict_to_list(data: Dict, keys: List[str]) -> List[Dict[str, Any]]:
     """Convert a dictionary to a list of dictionaries.
 
     Args:

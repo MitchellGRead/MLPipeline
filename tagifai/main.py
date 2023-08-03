@@ -14,7 +14,7 @@ from optuna.integration.mlflow import MLflowCallback
 
 from config import config
 from config.config import logger
-from tagifai import data, predict, train, utils
+from tagifai import data_old, predict, train_old, utils_old
 
 warnings.filterwarnings("ignore")
 
@@ -51,14 +51,14 @@ def train_model(experiment_name: str, run_name: str, args_fp: str = "config/args
     df = pd.read_csv(Path(config.DATA_DIR, "labeled_projects.csv"))
 
     # Train
-    args = Namespace(**utils.load_dict(filepath=args_fp))
+    args = Namespace(**utils_old.load_dict(filepath=args_fp))
     logger.info(f"Training model with args={args}")
 
     mlflow.set_experiment(experiment_name=experiment_name)
     with mlflow.start_run(run_name=run_name):
         run_id = mlflow.active_run().info.run_id
         logger.info(f"Run ID: {run_id}")
-        artifacts = train.train(df=df, args=args)
+        artifacts = train_old.train(df=df, args=args)
         performance = artifacts["performance"]
         logger.info(json.dumps(performance, indent=2))
 
@@ -71,16 +71,16 @@ def train_model(experiment_name: str, run_name: str, args_fp: str = "config/args
 
         # Log artifacts
         with tempfile.TemporaryDirectory() as dp:
-            utils.save_dict(vars(artifacts["args"]), Path(dp, "args.json"), cls=NumpyEncoder)
+            utils_old.save_dict(vars(artifacts["args"]), Path(dp, "args.json"), cls=NumpyEncoder)
             artifacts["label_encoder"].save(Path(dp, "label_encoder.json"))
             joblib.dump(artifacts["vectorizer"], Path(dp, "vectorizer.pkl"))
             joblib.dump(artifacts["model"], Path(dp, "model.pkl"))
-            utils.save_dict(performance, Path(dp, "performance.json"))
+            utils_old.save_dict(performance, Path(dp, "performance.json"))
             mlflow.log_artifacts(dp)
 
     # Save to config
     open(Path(config.CONFIG_DIR, "run_id.txt"), "w").write(run_id)
-    utils.save_dict(performance, Path(config.CONFIG_DIR, "performance.json"))
+    utils_old.save_dict(performance, Path(config.CONFIG_DIR, "performance.json"))
 
 
 def optimize(
@@ -98,12 +98,12 @@ def optimize(
     df = pd.read_csv(Path(config.DATA_DIR, "labeled_projects.csv"))
 
     # Optimize
-    args = Namespace(**utils.load_dict(filepath=args_fp))
+    args = Namespace(**utils_old.load_dict(filepath=args_fp))
     pruner = optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=5)
     study = optuna.create_study(study_name=study_name, direction="maximize", pruner=pruner)
     mlflow_callback = MLflowCallback(tracking_uri=mlflow.get_tracking_uri(), metric_name="f1")
     study.optimize(
-        lambda trial: train.objective(args, df, trial),
+        lambda trial: train_old.objective(args, df, trial),
         n_trials=num_trials,
         callbacks=[mlflow_callback],
     )
@@ -111,7 +111,7 @@ def optimize(
     # Best trial
     trials_df = study.trials_dataframe()
     trials_df = trials_df.sort_values(["user_attrs_f1"], ascending=False)
-    utils.save_dict({**args.__dict__, **study.best_trial.params}, args_fp, cls=NumpyEncoder)
+    utils_old.save_dict({**args.__dict__, **study.best_trial.params}, args_fp, cls=NumpyEncoder)
     logger.info(f"Best value (f1): {study.best_trial.value}")
     logger.info(f"Best hyperparameters: {json.dumps(study.best_trial.params, indent=2)}")
 
@@ -150,11 +150,11 @@ def load_artifacts(run_id: str) -> Dict[str, Any]:
     artifacts_dir = Path(config.MODEL_REGISTRY, experiment_id, run_id, "artifacts")
 
     # Load objects from run
-    args = Namespace(**utils.load_dict(filepath=Path(artifacts_dir, "args.json")))
+    args = Namespace(**utils_old.load_dict(filepath=Path(artifacts_dir, "args.json")))
     vectorizer = joblib.load(Path(artifacts_dir, "vectorizer.pkl"))
-    label_encoder = data.LabelEncoder.load(fp=Path(artifacts_dir, "label_encoder.json"))
+    label_encoder = data_old.LabelEncoder.load(fp=Path(artifacts_dir, "label_encoder.json"))
     model = joblib.load(Path(artifacts_dir, "model.pkl"))
-    performance = utils.load_dict(filepath=Path(artifacts_dir, "performance.json"))
+    performance = utils_old.load_dict(filepath=Path(artifacts_dir, "performance.json"))
 
     return {
         "args": args,
