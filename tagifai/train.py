@@ -1,5 +1,7 @@
 import datetime
 import json
+from datetime import datetime
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -22,7 +24,7 @@ from ray.train.torch import TorchCheckpoint, TorchTrainer
 from transformers import BertModel
 from typing_extensions import Annotated
 
-from config.config import MLFLOW_TRACKING_URI, logger
+from config.config import MLFLOW_TRACKING_URI, RESULTS_DIR, logger
 from tagifai import data, models, utils
 
 # Initialize Typer CLI app
@@ -170,7 +172,7 @@ def train_model(
     num_samples: Annotated[int, typer.Option(help="number of samples to use from dataset.")] = None,
     num_epochs: Annotated[int, typer.Option(help="number of epochs to train for.")] = 1,
     batch_size: Annotated[int, typer.Option(help="number of samples per batch.")] = 256,
-    results_fp: Annotated[str, typer.Option(help="filepath to save results to.")] = None,
+    results_loc: Annotated[str, typer.Option(help="filepath to save results to.")] = RESULTS_DIR,
 ) -> ray.air.result.Result:
     """Main train function to train our model as a distributed workload.
 
@@ -187,16 +189,27 @@ def train_model(
             If this is passed in, it will override the config. Defaults to None.
         batch_size (int, optional): number of samples per batch.
             If this is passed in, it will override the config. Defaults to None.
-        results_fp (str, optional): filepath to save results to. Defaults to None.
+        results_loc (str, optional): location to save results and ray checkpoints to. Defaults to ./results directory.
+            None if you don't want to save training results json, checkpoint results default to ~/ray_results.
 
     Returns:
         ray.air.result.Result: training results.
     """
     # Set up
+    if results_loc:
+        training_result_loc = Path(
+            results_loc, f'{experiment_name}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}'
+        )
+        utils.create_dir(training_result_loc)
+    else:
+        training_result_loc = None
     train_loop_config = json.loads(train_loop_config)
     train_loop_config["num_samples"] = num_samples
     train_loop_config["num_epochs"] = num_epochs
     train_loop_config["batch_size"] = batch_size
+    logger.info(
+        f"Setting up training for {experiment_name} - Dataset location {dataset_loc} - Results saved to {training_result_loc} - Training config\n{json.dumps(train_loop_config, indent=2)}"
+    )
 
     # Scaling config
     scaling_config = ScalingConfig(
@@ -224,9 +237,11 @@ def train_model(
     run_config = RunConfig(
         callbacks=[mlflow_callback],
         checkpoint_config=checkpoint_config,
+        storage_path=training_result_loc,
     )
 
     # Dataset
+    logger.info("Loading training data")
     ds = data.load_data(dataset_loc=dataset_loc, num_samples=train_loop_config["num_samples"])
     train_ds, val_ds = data.stratify_split(ds, stratify="tag", test_size=0.2)
     tags = train_ds.unique(column="tag")
@@ -239,6 +254,7 @@ def train_model(
     }
 
     # Preprocess
+    logger.info("Preprocessing data")
     preprocessor = data.CustomPreprocessor()
     train_ds = preprocessor.fit_transform(train_ds)
     val_ds = preprocessor.transform(val_ds)
@@ -246,6 +262,7 @@ def train_model(
     val_ds = val_ds.materialize()
 
     # Trainer
+    logger.info("Starting training session")
     trainer = TorchTrainer(
         train_loop_per_worker=train_loop_per_worker,
         train_loop_config=train_loop_config,
@@ -258,8 +275,8 @@ def train_model(
 
     # Train
     results = trainer.fit()
-    d = {
-        "timestamp": datetime.datetime.now().strftime("%B %d, %Y %I:%M:%S %p"),
+    results_data = {
+        "timestamp": datetime.now().strftime("%B %d, %Y %I:%M:%S %p"),
         "run_id": utils.get_run_id(
             experiment_name=experiment_name, trial_id=results.metrics["trial_id"]
         ),
@@ -268,9 +285,9 @@ def train_model(
             results.metrics_dataframe.to_dict(), keys=["epoch", "train_loss", "val_loss"]
         ),
     }
-    logger.info(json.dumps(d, indent=2))
-    if results_fp:  # pragma: no cover, saving results
-        utils.save_dict(d, results_fp)
+    logger.info(json.dumps(results_data, indent=2))
+    if training_result_loc:  # pragma: no cover, saving results
+        utils.save_dict(results_data, training_result_loc, "training_results.json")
     return results
 
 

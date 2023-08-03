@@ -17,6 +17,7 @@ CONFIG_DIR = Path(BASE_DIR, "config")
 DATA_DIR = Path(BASE_DIR, "data")
 LOGS_DIR = Path(BASE_DIR, "logs")
 STORES_DIR = Path(BASE_DIR, "stores")
+RESULTS_DIR = Path(BASE_DIR, "results")
 
 # Stores
 MODEL_REGISTRY = Path(STORES_DIR, "model")
@@ -24,6 +25,7 @@ MODEL_REGISTRY = Path(STORES_DIR, "model")
 # Create dirs
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_REGISTRY.mkdir(parents=True, exist_ok=True)
 
 # Uris
