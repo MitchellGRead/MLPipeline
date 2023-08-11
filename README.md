@@ -24,7 +24,8 @@ python3 -m mkdocs serve
 export EXPERIMENT_NAME="llm"
 export TRAIN_LOOP_CONFIG='{"dropout_p": 0.5, "lr": 1e-4, "lr_factor": 0.8, "lr_patience": 3}'
 
-python tagifai/train.py \
+python pipeline/train.py \
+    --model-to-train "Tagifai_LLM_Model" \
     --experiment-name "$EXPERIMENT_NAME" \
     --dataset-loc "./data/labeled_projects.csv" \
     --train-loop-config "$TRAIN_LOOP_CONFIG" \
@@ -41,7 +42,7 @@ export EXPERIMENT_NAME="llm"
 export TRAIN_LOOP_CONFIG='{"dropout_p": 0.5, "lr": 1e-4, "lr_factor": 0.8, "lr_patience": 3}'
 export INITIAL_PARAMS="[{\"train_loop_config\": $TRAIN_LOOP_CONFIG}]"
 
-python tagifai/tune.py \
+python pipeline/tune.py \
     --experiment-name "$EXPERIMENT_NAME" \
     --dataset-loc "./data/labeled_projects.csv" \
     --initial-params "$INITIAL_PARAMS" \

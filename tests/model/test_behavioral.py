@@ -1,7 +1,6 @@
 import pytest
-from utils import get_predicted_tag
-
 from tagifai import main
+from utils import get_predicted_tag
 
 
 @pytest.mark.parametrize(

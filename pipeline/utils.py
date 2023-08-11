@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 import numpy as np
 import torch
 from ray.data import DatasetContext
-from ray.train.torch import get_device
 
 from config.config import mlflow
 
@@ -85,26 +84,6 @@ def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
     for i, row in enumerate(arr):
         padded_arr[i][: len(row)] = row
     return padded_arr
-
-
-def collate_fn(
-    batch: Dict[str, np.ndarray]
-) -> Dict[str, torch.Tensor]:  # pragma: no cover, air internal
-    """Convert a batch of numpy arrays to tensors (with appropriate padding).
-
-    Args:
-        batch (Dict[str, np.ndarray]): input batch as a dictionary of numpy arrays.
-
-    Returns:
-        Dict[str, torch.Tensor]: output batch as a dictionary of tensors.
-    """
-    batch["ids"] = pad_array(batch["ids"])
-    batch["masks"] = pad_array(batch["masks"])
-    dtypes = {"ids": torch.int32, "masks": torch.int32, "targets": torch.int64}
-    tensor_batch = {}
-    for key, array in batch.items():
-        tensor_batch[key] = torch.as_tensor(array, dtype=dtypes[key], device=get_device())
-    return tensor_batch
 
 
 def get_run_id(
