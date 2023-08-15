@@ -1,1 +1,0 @@
-::: tagifai.predict

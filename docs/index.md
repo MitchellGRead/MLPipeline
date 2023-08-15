@@ -1,7 +1,7 @@
 ## Documentation
 
-- [Workflows](tagifai/main.md): main workflows.
-- [tagifai](tagifai/data.md): documentation of functionality.
+- [Training](pipeline/train.md): Training workflows.
+- [Evaluation](pipeline/evaluate.md): Evaluation workflows.
 
 ## Mission
 

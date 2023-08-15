@@ -2,14 +2,10 @@ site_name: Everything Ai
 repo_url: https://github.com/demo-ai-labs/MLPipeline
 nav:
   - Home: index.md
-  - workflows:
-    - main: tagifai/main.md
-  - tagifai:
-    - data: tagifai/data.md
-    - evaluate: tagifai/evaluate.md
-    - predict: tagifai/predict.md
-    - train: tagifai/train.md
-    - utils: tagifai/utils.md
+  - pipeline:
+    - train: pipeline/train.md
+    - evaluate: pipeline/evaluate.md
+    - utils: pipeline/utils.md
 theme: readthedocs
 plugins:
   - mkdocstrings
