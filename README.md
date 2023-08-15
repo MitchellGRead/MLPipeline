@@ -34,6 +34,20 @@ python pipeline/train.py \
     --results-loc results/
 ```
 
+You can also provide the hyper parameters as a filepath to a json file:
+```bash
+python pipeline/train.py \
+    --model-to-train "Tagifai_LLM_Model" \
+    --dataset-loc "./data/labeled_projects.csv" \
+    --train-loop-config "./config/tagifai_args.json" \
+    --num-workers 2 \
+    --cpu-per-worker 1 \
+    --num-epochs 1 \
+    --batch-size 256 \
+    --num-samples 200 \
+    --results-loc results/
+```
+
 # Tuning from CLI (WIP)
 ```bash
 export EXPERIMENT_NAME="llm"

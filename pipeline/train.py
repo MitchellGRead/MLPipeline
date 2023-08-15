@@ -27,7 +27,12 @@ app = typer.Typer()
 def train_model(
     model_to_train: Annotated[str, typer.Option(help="name of model that we wish to train for")],
     dataset_loc: Annotated[str, typer.Option(help="location of the dataset.")],
-    train_loop_config: Annotated[str, typer.Option(help="arguments to use for training.")],
+    train_loop_config: Annotated[
+        str,
+        typer.Option(
+            help="arguments to use for training. Can be either a json string or filepath to json file"
+        ),
+    ],
     num_workers: Annotated[int, typer.Option(help="number of workers to use for training.")] = 1,
     cpu_per_worker: Annotated[int, typer.Option(help="number of CPUs to use per worker.")] = 1,
     gpu_per_worker: Annotated[int, typer.Option(help="number of GPUs to use per worker.")] = 0,
@@ -70,7 +75,14 @@ def train_model(
         utils.create_dir(training_result_loc)
     else:
         training_result_loc = None
-    train_loop_config = json.loads(train_loop_config)
+
+    try:
+        train_loop_config = json.loads(train_loop_config)
+    except ValueError:
+        train_loop_config = utils.load_dict(train_loop_config)
+    except:  # noqa: E722
+        raise TypeError("train_loop_config must be a stringified json or a path to a json file")
+
     train_loop_config["num_samples"] = num_samples
     train_loop_config["num_epochs"] = num_epochs
     train_loop_config["batch_size"] = batch_size
