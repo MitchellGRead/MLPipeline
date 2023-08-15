@@ -10,6 +10,10 @@ class ModelInterface(ABC):
     """
 
     @abc.abstractmethod
-    def train_loop_per_worker(self) -> None:
-        """Training loop to used for model training and tuning with Ray workers"""
+    def train_loop_per_worker(self, config: dict) -> None:
+        """Training loop to used for model training and tuning with Ray workers
+
+        Args:
+            config (dict): training parameter config
+        """
         pass

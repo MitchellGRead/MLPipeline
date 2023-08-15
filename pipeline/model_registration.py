@@ -3,7 +3,7 @@ from ray.data import Preprocessor
 from ml.api.data_handler_interface import DataHandlerInterface
 from ml.api.metric_handler_interface import MetricHandlerInterface
 from ml.api.model_interface import ModelInterface
-from ml.data.tagifai_data_handler import TagifaiDataHandler
+from ml.data.tagifai import TagifaiDataHandler
 from ml.metric.tagifai import TagifaiMetricHandler
 from ml.model.tagifai import TagifaiModel
 from ml.preprocessor.tagifai import TagifaiPreprocessor
