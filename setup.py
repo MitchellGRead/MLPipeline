@@ -13,9 +13,9 @@ style_packages = ["black==22.3.0", "flake8==6.0.0", "Flake8-pyproject==1.2.3", "
 dev_packages = ["pre-commit==3.3.3", "typer==0.9.0"]
 
 setup(
-    name="tagifai",
+    name="Everything Ai",
     version=0.1,
-    description="Classify machine learning projects.",
+    description="Pipeline for processing, training, tuning, and evaluating Everything Ai models.",
     author="Mitchell Read",
     author_email="mitchell.g.read@gmail.com",
     python_requires=">=3.10",
