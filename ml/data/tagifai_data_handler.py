@@ -12,6 +12,9 @@ class TagifaiDataHandler(DataHandlerInterface):
         super().__init__(data_loc, num_samples)
         self.dataset = utils.load_csv_data(data_loc, num_samples)
 
+    def get_data(self) -> Dataset:
+        return self.dataset
+
     def split_data(
         self, test_size: float, shuffle: bool = True, seed: int = 1234
     ) -> tuple[Dataset, Dataset]:

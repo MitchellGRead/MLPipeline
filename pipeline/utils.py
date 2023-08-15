@@ -1,12 +1,16 @@
 import json
 import os
 import random
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 import numpy as np
 import torch
+from ray.air import Result
 from ray.data import DatasetContext
+from ray.train.torch.torch_checkpoint import TorchCheckpoint
 
 from config.config import mlflow
 
@@ -63,9 +67,8 @@ def create_dir(path: str) -> None:
     Args:
         path (str): Path for directory
     """
-    directory = os.path.dirname(path)
-    if directory and not os.path.exists(directory):  # pragma: no cover, OS operation
-        os.makedirs(directory)
+    if not os.path.exists(path):  # pragma: no cover, OS operation
+        os.makedirs(path)
 
 
 def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
@@ -86,6 +89,24 @@ def pad_array(arr: np.ndarray, dtype=np.int32) -> np.ndarray:
     return padded_arr
 
 
+def get_readable_timestamp() -> str:
+    """Get a readable time stamp of the current time
+
+    Returns:
+        str: i.e. August 11, 2023 08:18:59 AM
+    """
+    return datetime.now().strftime("%B %d, %Y %I:%M:%S %p")
+
+
+def get_filepath_timestamp() -> str:
+    """Get a timestamp suitable for filepaths
+
+    Returns:
+        str: i.e. 2023_08_11_08_13_23
+    """
+    return datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
+
 def get_run_id(
     experiment_name: str, trial_id: str
 ) -> str:  # pragma: no cover, mlflow functionality
@@ -103,6 +124,20 @@ def get_run_id(
         experiment_names=[experiment_name], filter_string=f"tags.trial_name = '{trial_name}'"
     ).iloc[0]
     return run.run_id
+
+
+def get_best_checkpoint(run_id: str) -> TorchCheckpoint:  # pragma: no cover, mlflow logic
+    """Get the best checkpoint from a specific run.
+
+    Args:
+        run_id (str): ID of the run to get the best checkpoint from.
+
+    Returns:
+        TorchCheckpoint: Best checkpoint from the run.
+    """
+    artifact_dir = urlparse(mlflow.get_run(run_id).info.artifact_uri).path
+    results = Result.from_path(artifact_dir)
+    return results.best_checkpoints[0][0]
 
 
 def dict_to_list(data: Dict, keys: List[str]) -> List[Dict[str, Any]]:

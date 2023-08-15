@@ -22,6 +22,15 @@ class DataHandlerInterface(ABC):
         super().__init__()
 
     @abc.abstractmethod
+    def get_data(self) -> Dataset:
+        """Get the create Ray dataset
+
+        Returns:
+            Dataset: Ray dataset that this handler is managing
+        """
+        pass
+
+    @abc.abstractmethod
     def split_data(
         self, data: Dataset, test_size: float, shuffle: bool = True, seed: int = 1234
     ) -> tuple[Dataset, Dataset]:

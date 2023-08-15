@@ -7,7 +7,7 @@ def load_csv_data(dataset_loc: str, num_samples: int = None) -> Dataset:
 
     Args:
         dataset_loc (str): Location of the dataset.
-        num_samples (int, optional): The number of samples to load. Defaults to None.
+        num_samples (int, optional): The number of samples to load. Defaults to None (read all samples).
 
     Returns:
         Dataset: Our dataset represented by a Ray Dataset.
