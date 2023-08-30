@@ -10,7 +10,7 @@ from transformers import BertModel
 
 from config.config import logger
 from ml.api.model_interface import ModelInterface
-from pipeline import utils
+from ml.ml_utils import numpy_utils
 
 
 class TagifaiModel(ModelInterface):
@@ -35,8 +35,8 @@ class TagifaiModel(ModelInterface):
         Returns:
             Dict[str, torch.Tensor]: output batch as a dictionary of tensors.
         """
-        batch["ids"] = utils.pad_array(batch["ids"])
-        batch["masks"] = utils.pad_array(batch["masks"])
+        batch["ids"] = numpy_utils.pad_array(batch["ids"])
+        batch["masks"] = numpy_utils.pad_array(batch["masks"])
         dtypes = {"ids": torch.int32, "masks": torch.int32, "targets": torch.int64}
         tensor_batch = {}
         for key, array in batch.items():

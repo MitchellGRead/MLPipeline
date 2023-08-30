@@ -3,21 +3,28 @@ from pathlib import Path
 
 import ray
 import typer
+from pipeline_utils import (
+    convert_utils,
+    os_utils,
+    rand_utils,
+    time_utils,
+    wb_utils,
+)
 from ray.air.config import (
     CheckpointConfig,
     DatasetConfig,
     RunConfig,
     ScalingConfig,
 )
-from ray.air.integrations.mlflow import MLflowLoggerCallback
+from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.data import Preprocessor
 from ray.train.torch import TorchTrainer
 from typing_extensions import Annotated
 
-from config.config import MLFLOW_TRACKING_URI, RESULTS_DIR, logger
+from config.config import RESULTS_DIR, logger
 from ml.api.data_handler_interface import DataHandlerInterface
 from ml.api.model_interface import ModelInterface
-from pipeline import evaluate, model_registration, utils
+from pipeline import artifacts, evaluate, model_registration
 
 # Initialize Typer CLI app
 app = typer.Typer()
@@ -43,6 +50,9 @@ def train_model(
         bool,
         typer.Option(help="flag on whether to run metric evaluation on the newly trained model"),
     ] = False,
+    only_keep_latest: Annotated[
+        bool, typer.Option(help="only save the latest checkpoint in W&B.")
+    ] = True,
     results_loc: Annotated[str, typer.Option(help="filepath to save results to.")] = RESULTS_DIR,
 ) -> ray.air.result.Result:
     """Main train function to train our model as a distributed workload.
@@ -61,6 +71,7 @@ def train_model(
         batch_size (int, optional): number of samples per batch.
             If this is passed in, it will override the config. Defaults to None.
         eval_model (bool, optional): flag on whether to run metric evaluation on the newly trained model. Defaults to False
+        only_keep_latest (bool, optional): only save the latest checkpoint in W&B. Defaults to True
         results_loc (str, optional): location to save results and ray checkpoints to. Defaults to ./results directory.
             None if you don't want to save training results json, checkpoint results default to ~/ray_results.
 
@@ -70,16 +81,16 @@ def train_model(
     # Set up
     if results_loc:
         training_result_loc = Path(
-            results_loc, "training", model_to_train, utils.get_filepath_timestamp()
+            results_loc, "training", model_to_train, time_utils.get_filepath_timestamp()
         )
-        utils.create_dir(training_result_loc)
+        os_utils.create_dir(training_result_loc)
     else:
         training_result_loc = None
 
     try:
         train_loop_config = json.loads(train_loop_config)
     except ValueError:
-        train_loop_config = utils.load_dict(train_loop_config)
+        train_loop_config = os_utils.load_dict(train_loop_config)
     except:  # noqa: E722
         raise TypeError("train_loop_config must be a stringified json or a path to a json file")
 
@@ -90,11 +101,14 @@ def train_model(
     training_model = model_registration.getModelFactory(model_to_train)()
     preprocessor = model_registration.getPreprocessorFactory(model_to_train)()
     data_handler = model_registration.getDataHandler(model_to_train)(dataset_loc, num_samples)
+    model_project = model_registration.getModelProject(model_to_train)
     assert isinstance(training_model, ModelInterface)
     assert isinstance(preprocessor, Preprocessor)
     assert isinstance(data_handler, DataHandlerInterface)
+    assert isinstance(model_project, model_registration.ModelProject)
 
-    utils.set_seeds()
+    rand_utils.set_seeds()
+    weights_and_biases_api_key = os_utils.get_env_value("WEIGHT_AND_BIASES_API_KEY")
 
     logger.info(
         f"Setting up training for {model_to_train} - Dataset location {dataset_loc} - Results saved to {training_result_loc} - Training config\n{json.dumps(train_loop_config, indent=2)}"
@@ -115,18 +129,20 @@ def train_model(
         checkpoint_score_order="min",
     )
 
-    # MLflow callback
-    mlflow_callback = MLflowLoggerCallback(
-        tracking_uri=MLFLOW_TRACKING_URI,
-        experiment_name=model_to_train,
-        save_artifact=True,
+    # Callbacks
+    wandb_callback = WandbLoggerCallback(
+        project=model_project.value,
+        group=model_to_train,
+        api_key=weights_and_biases_api_key,
+        log_config=True,
+        upload_checkpoints=True,
+        job_type="train",
     )
 
     # Run config
     run_config = RunConfig(
-        callbacks=[mlflow_callback],
+        callbacks=[wandb_callback],
         checkpoint_config=checkpoint_config,
-        storage_path=training_result_loc,
     )
 
     # Dataset
@@ -161,23 +177,36 @@ def train_model(
     # Train
     logger.info("Starting training session")
     results = trainer.fit()
-    run_id = utils.get_run_id(experiment_name=model_to_train, trial_id=results.metrics["trial_id"])
+    run_id = results.metrics["trial_id"]
     results_data = {
-        "timestamp": utils.get_readable_timestamp(),
+        "timestamp": time_utils.get_readable_timestamp(),
+        "run_name": wb_utils.get_run_name(run_id),
         "run_id": run_id,
         "params": results.config["train_loop_config"],
-        "metrics": utils.dict_to_list(
+        "metrics": convert_utils.dict_to_list(
             results.metrics_dataframe.to_dict(), keys=["epoch", "train_loss", "val_loss"]
         ),
     }
+
     logger.info(json.dumps(results_data, indent=2))
+
     if training_result_loc:  # pragma: no cover, saving results
-        utils.save_dict(results_data, training_result_loc, "training_results.json")
+        os_utils.save_dict(results_data, training_result_loc, "training_results.json")
+
+    if only_keep_latest:
+        artifacts.delete_run_artifacts(
+            model_to_delete_for=model_to_train, run_id=run_id, artifact_type="model"
+        )
 
     if eval_model:
         metric_handler = model_registration.getMetricHandler(model_to_train)()
         evaluate.internal_evaluate(
-            model_to_train, run_id, data_handler, metric_handler, results_loc
+            model_to_eval=model_to_train,
+            model_project=model_project,
+            run_id=run_id,
+            data_handler=data_handler,
+            metric_handler=metric_handler,
+            results_loc=results_loc,
         )
 
     return results

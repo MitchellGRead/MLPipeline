@@ -1,3 +1,5 @@
+from enum import Enum
+
 from ray.data import Preprocessor
 
 from ml.api.data_handler_interface import DataHandlerInterface
@@ -11,26 +13,56 @@ from ml.preprocessor.tagifai import TagifaiPreprocessor
 # Identifiable model ids for pipeline configuration
 tagifai_model_id = "Tagifai_LLM_Model"
 
-# Reference to models via their id lazily loaded
-pipeline_models: dict[
-    tuple[ModelInterface, Preprocessor, DataHandlerInterface, MetricHandlerInterface]
-] = {
-    # unique_model_id: (model impl, model preprocessor, model data handler, model metric handler)
-    tagifai_model_id: (TagifaiModel, TagifaiPreprocessor, TagifaiDataHandler, TagifaiMetricHandler),
+
+class ModelProject(Enum):
+    LLM = "LLM"
+    GNS = "GNS"
+
+
+def _create_model_entry(
+    model: ModelInterface,
+    preprocessor: Preprocessor,
+    data_handler: DataHandlerInterface,
+    metric_handler: MetricHandlerInterface,
+    model_project: ModelProject,
+) -> dict[str, any]:
+    return {
+        "model": model,
+        "preprocessor": preprocessor,
+        "data_handler": data_handler,
+        "metric_handler": metric_handler,
+        "model_project": model_project,
+    }
+
+
+# Reference to models via their id containing model specific information and lazy loaded class instances
+pipeline_models: dict[str, dict[str, any]] = {
+    tagifai_model_id: _create_model_entry(
+        TagifaiModel,
+        TagifaiPreprocessor,
+        TagifaiDataHandler,
+        TagifaiMetricHandler,
+        ModelProject.LLM,
+    )
 }
 
 
 def getModelFactory(for_model: str) -> ModelInterface:
-    return pipeline_models[for_model][0]
+    # return pipeline_models[for_model][0]
+    return pipeline_models[for_model]["model"]
 
 
 def getPreprocessorFactory(for_model: str) -> Preprocessor:
-    return pipeline_models[for_model][1]
+    return pipeline_models[for_model]["preprocessor"]
 
 
 def getDataHandler(for_model: str) -> DataHandlerInterface:
-    return pipeline_models[for_model][2]
+    return pipeline_models[for_model]["data_handler"]
 
 
 def getMetricHandler(for_model: str) -> MetricHandlerInterface:
-    return pipeline_models[for_model][3]
+    return pipeline_models[for_model]["metric_handler"]
+
+
+def getModelProject(for_model: str) -> ModelProject:
+    return pipeline_models[for_model]["model_project"]

@@ -21,6 +21,7 @@ from typing_extensions import Annotated
 
 from config.config import MLFLOW_TRACKING_URI, RESULTS_DIR, logger
 from pipeline import data, train, utils
+from pipeline.utils import os_utils, rand_utils
 
 # Initialize Typer CLI app
 app = typer.Typer()
@@ -71,10 +72,10 @@ def tune_models(
         tuning_result_loc = Path(
             results_loc, "tuning", experiment_name, datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         )
-        utils.create_dir(tuning_result_loc)
+        os_utils.create_dir(tuning_result_loc)
     else:
         tuning_result_loc = None
-    utils.set_seeds()
+    rand_utils.set_seeds()
     train_loop_config = {}
     train_loop_config["num_samples"] = num_samples
     train_loop_config["num_epochs"] = num_epochs

@@ -4,12 +4,14 @@ import sys
 from pathlib import Path
 
 import mlflow
+from ray.data import DatasetContext
 from rich.logging import RichHandler
 
 # Assets
 PROJECTS_URL = "https://github.com/demo-ai-labs/MLPipeline/blob/main/data/projects.csv"
 TAGS_URL = "https://github.com/demo-ai-labs/MLPipeline/blob/main/data/tags.csv"
 ACCEPTED_TAGS = ["natural-language-processing", "computer-vision", "mlops", "graph-learning"]
+WEIGHTS_AND_BIASES_PROJECT = "everything-ai"
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent.absolute()
@@ -32,8 +34,9 @@ MODEL_REGISTRY.mkdir(parents=True, exist_ok=True)
 MLFLOW_TRACKING_URI = f"file://{MODEL_REGISTRY.absolute()}"
 ARGS_URI = Path(CONFIG_DIR, "args.json")
 
-# MLFlow model registry
+# Setup
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+DatasetContext.get_current().execution_options.preserve_order = True
 
 # Logger setup
 logging_config = {

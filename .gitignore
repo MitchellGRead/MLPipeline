@@ -4,6 +4,9 @@ stores/
 mlflow/
 results/
 workspaces/
+artifacts/
+wandb/
+W&B_Arch.txt
 
 # VSCode
 .vscode/
