@@ -113,7 +113,6 @@ def internal_evaluate(
     run_id: str,
     data_handler: DataHandlerInterface,
     metric_handler: MetricHandlerInterface,
-    wandb_api: wandb.Api = None,
     results_loc: str = RESULTS_DIR,
 ) -> dict:
     """Internal evaluation method for connecting with other pipeline components
@@ -123,15 +122,12 @@ def internal_evaluate(
         run_id (str): run id to evaluate on
         data_handler (DataHandlerInterface): models data handler
         metric_handler (MetricHandlerInterface): models metric handler
-        wandb_api: wandb api instance. Default None, Instance made for you
         results_loc (str, optional): location to save results to. Defaults to ./results directory.
             None if you don't want to save the evaluation
 
     Returns:
         dict: model performance metrics
     """
-
-    wandb_api = wandb_api if wandb_api else wandb.Api()
 
     if results_loc:
         evalution_results_loc = Path(results_loc, "evaluation", model_to_eval, run_id)
@@ -180,6 +176,7 @@ def internal_evaluate(
 
     evaluation_artifact.add_file(Path(evalution_results_loc, artifact_name), artifact_name)
     run.log_artifact(evaluation_artifact)
+    run.finish()
 
     return metrics
 

@@ -128,6 +128,8 @@ class TagifaiModel(ModelInterface):
         Args:
             config (dict): arguments to use for training.
         """
+        wandb = config["manager"]()
+
         # Hyperparameters
         dropout_p = config["dropout_p"]
         lr = config["lr"]
@@ -178,7 +180,8 @@ class TagifaiModel(ModelInterface):
                 val_loss=val_loss,
             )
             checkpoint = TorchCheckpoint.from_model(model=model)
-            session.report(metrics, checkpoint=checkpoint)
+            wandb.report(metrics, checkpoint)
+        wandb.cleanup()
 
 
 class FinetunedLLM(nn.Module):  # pragma: no cover, torch model

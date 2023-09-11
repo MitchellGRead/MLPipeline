@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import ray
@@ -16,24 +17,72 @@ from ray.air.config import (
     RunConfig,
     ScalingConfig,
 )
-from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.data import Preprocessor
 from ray.train.torch import TorchTrainer
 from typing_extensions import Annotated
 
+import wandb
 from config.config import RESULTS_DIR, logger
 from ml.api.data_handler_interface import DataHandlerInterface
 from ml.api.model_interface import ModelInterface
 from pipeline import artifacts, evaluate, model_registration
+from pipeline.wandb_manager import WandbManager
 
 # Initialize Typer CLI app
 app = typer.Typer()
 
 
+def download_dataset(dataset_loc: str, track_dataset: str, model_id: str) -> tuple[str, str]:
+    # Convert local into W&B
+    if os.path.isfile(dataset_loc) and track_dataset:
+        [status, name] = artifacts.process_dataset(
+            dataset_loc=dataset_loc, data_type="raw_data", data_for_model_id=model_id
+        )
+
+        if not status:
+            msg = f"Failed to process the dataset {dataset_loc} into weights and biases"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        return dataset_loc, name
+
+    # Doing a simple local run
+    if os.path.isfile(dataset_loc) and not track_dataset:
+        return dataset_loc, None
+
+    # Verify is an artifact name
+    is_artifact_name = wb_utils.verify_artifact_name(dataset_loc)
+    if not is_artifact_name:
+        msg = "Artifact names should be a <name>:<alias> format. Check if your name is correct or if you instead want to only use a local dataset."
+        logger.error(msg)
+        raise ValueError(msg)
+
+    # Setup to pull artifact
+    model_project = model_registration.getModelProject(model_id)
+    wb_path = wb_utils.get_object_path(model_project.value, dataset_loc)
+    api = wandb.Api()
+
+    try:
+        artifact = api.artifact(wb_path)
+    except ValueError:
+        msg = f"Could not find an artifact at {wb_path}. Are you sure one exists?"
+        logger.error(msg)
+        raise ValueError(msg)
+
+    # Download locally
+    artifact_dir = artifact.download()
+    return artifact_dir, artifact.name
+
+
 @app.command()
 def train_model(
     model_to_train: Annotated[str, typer.Option(help="name of model that we wish to train for")],
-    dataset_loc: Annotated[str, typer.Option(help="location of the dataset.")],
+    dataset_loc: Annotated[
+        str,
+        typer.Option(
+            help="location of the dataset. Can be a local file path or a W&B <name>:<alias>"
+        ),
+    ],
     train_loop_config: Annotated[
         str,
         typer.Option(
@@ -51,15 +100,26 @@ def train_model(
         typer.Option(help="flag on whether to run metric evaluation on the newly trained model"),
     ] = False,
     only_keep_latest: Annotated[
-        bool, typer.Option(help="only save the latest checkpoint in W&B.")
+        bool,
+        typer.Option(
+            "--keep-latest/--keep-all," "-k/-K",
+            help="flag to only save the latest checkpoint in W&B.",
+        ),
     ] = True,
+    track_dataset: Annotated[
+        bool,
+        typer.Option(
+            "--track-data/--keep-local," "-t/-T",
+            help="flag to track the runs dataset into W&B. If an artifact already exists in W&B with the same name, then a new version is created.",
+        ),
+    ] = False,
     results_loc: Annotated[str, typer.Option(help="filepath to save results to.")] = RESULTS_DIR,
 ) -> ray.air.result.Result:
     """Main train function to train our model as a distributed workload.
 
     Args:
         model_to_train (str): name of model that we wish to train for. See model_registration.py for ids
-        dataset_loc (str): location of the dataset.
+        dataset_loc (str): location of the dataset. Can be a local file path or a W&B <name>:<alias>
         train_loop_config (str): arguments to use for training.
         num_workers (int, optional): number of workers to use for training. Defaults to 1.
         cpu_per_worker (int, optional): number of CPUs to use per worker. Defaults to 1.
@@ -72,8 +132,8 @@ def train_model(
             If this is passed in, it will override the config. Defaults to None.
         eval_model (bool, optional): flag on whether to run metric evaluation on the newly trained model. Defaults to False
         only_keep_latest (bool, optional): only save the latest checkpoint in W&B. Defaults to True
+        track_dataset (bool, optional): flag to track the runs dataset into W&B. If an artifact already exists in W&B with the same name, then a new version is created. Default False
         results_loc (str, optional): location to save results and ray checkpoints to. Defaults to ./results directory.
-            None if you don't want to save training results json, checkpoint results default to ~/ray_results.
 
     Returns:
         ray.air.result.Result: training results.
@@ -98,9 +158,13 @@ def train_model(
     train_loop_config["num_epochs"] = num_epochs
     train_loop_config["batch_size"] = batch_size
 
+    [local_dataset_loc, wb_dataset_name] = download_dataset(
+        dataset_loc, track_dataset, model_to_train
+    )
+
     training_model = model_registration.getModelFactory(model_to_train)()
     preprocessor = model_registration.getPreprocessorFactory(model_to_train)()
-    data_handler = model_registration.getDataHandler(model_to_train)(dataset_loc, num_samples)
+    data_handler = model_registration.getDataHandler(model_to_train)(local_dataset_loc, num_samples)
     model_project = model_registration.getModelProject(model_to_train)
     assert isinstance(training_model, ModelInterface)
     assert isinstance(preprocessor, Preprocessor)
@@ -111,7 +175,7 @@ def train_model(
     weights_and_biases_api_key = os_utils.get_env_value("WEIGHT_AND_BIASES_API_KEY")
 
     logger.info(
-        f"Setting up training for {model_to_train} - Dataset location {dataset_loc} - Results saved to {training_result_loc} - Training config\n{json.dumps(train_loop_config, indent=2)}"
+        f"Setting up training for {model_to_train} - Dataset location {dataset_loc} - W&B Name {wb_dataset_name} - Results saved to {training_result_loc} - Training config\n{json.dumps(train_loop_config, indent=2)}"
     )
 
     # Scaling config
@@ -124,24 +188,14 @@ def train_model(
 
     # Checkpoint config
     checkpoint_config = CheckpointConfig(
-        num_to_keep=1,
+        num_to_keep=1 if only_keep_latest else None,
         checkpoint_score_attribute="val_loss",
         checkpoint_score_order="min",
     )
 
-    # Callbacks
-    wandb_callback = WandbLoggerCallback(
-        project=model_project.value,
-        group=model_to_train,
-        api_key=weights_and_biases_api_key,
-        log_config=True,
-        upload_checkpoints=True,
-        job_type="train",
-    )
-
     # Run config
     run_config = RunConfig(
-        callbacks=[wandb_callback],
+        storage_path=training_result_loc,
         checkpoint_config=checkpoint_config,
     )
 
@@ -163,6 +217,17 @@ def train_model(
     train_ds = train_ds.materialize()
     eval_ds = eval_ds.materialize()
 
+    # Training Manager
+    train_loop_config["manager"] = lambda: WandbManager(
+        config=train_loop_config,
+        project=model_project.value,
+        group=model_to_train,
+        api_key=weights_and_biases_api_key,
+        job_type="train",
+        use_artifact=wb_dataset_name,
+        preprocessor=preprocessor,
+    )
+
     # Trainer
     trainer = TorchTrainer(
         train_loop_per_worker=training_model.train_loop_per_worker,
@@ -177,6 +242,10 @@ def train_model(
     # Train
     logger.info("Starting training session")
     results = trainer.fit()
+
+    del train_loop_config["manager"]
+    del results.config["train_loop_config"]["manager"]
+
     run_id = results.metrics["trial_id"]
     results_data = {
         "timestamp": time_utils.get_readable_timestamp(),

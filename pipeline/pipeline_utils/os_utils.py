@@ -1,4 +1,5 @@
 import json
+import ntpath
 import os
 from pathlib import Path
 
@@ -57,3 +58,8 @@ def create_dir(path: str) -> None:
     """
     if not os.path.exists(path):  # pragma: no cover, OS operation
         os.makedirs(path)
+
+
+def get_file_name_from_path(path: str) -> str:
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)

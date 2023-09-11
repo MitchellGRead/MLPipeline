@@ -50,13 +50,12 @@ You can also provide the hyper parameters as a filepath to a json file:
 ```bash
 python pipeline/train.py \
     --model-to-train "Tagifai_LLM_Model" \
-    --dataset-loc "./data/labeled_projects.csv" \
+    --dataset-loc "labeled_projects.csv:latest" \
     --train-loop-config "./config/tagifai_args.json" \
     --num-workers 2 \
     --cpu-per-worker 2 \
     --num-epochs 2 \
     --batch-size 256 \
-    --only-keep-latest \
     --results-loc results/
 ```
 
@@ -96,3 +95,8 @@ python pipeline/evaluate.py evaluate \
     --dataset-loc "./data/labeled_projects.csv" \
     --results-loc results/
 ```
+
+python pipeline/artifacts.py process-dataset \
+    --dataset-loc "./data/labeled_projects.csv" \
+    --data-type "raw_data" \
+    --data-for-model-id "Tagifai_LLM_Model"
