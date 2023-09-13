@@ -60,6 +60,50 @@ def create_dir(path: str) -> None:
         os.makedirs(path)
 
 
-def get_file_name_from_path(path: str) -> str:
-    head, tail = ntpath.split(path)
+def get_name_from_path(file_path: str) -> str:
+    """Gets the last name from path in an OS safe manner
+    i.e.
+    hello/world/test --> test
+    hello/world/test.txt --> text.txt
+
+    Args:
+        file_path (str): path to file
+
+    Returns:
+        str: filename
+    """
+    head, tail = ntpath.split(file_path)
     return tail or ntpath.basename(head)
+
+
+def get_files_in_dir(dir_path: str) -> list[str]:
+    """Gets the file names as paths within a directory
+
+    Args:
+        dir_path (str): path to directory
+
+    Returns:
+        list[str]: list of filenames in the directory one layer deep
+
+    Raises:
+        ValueError if the provided path is not a directory
+    """
+    if not os.path.isdir(dir_path):
+        raise ValueError(f"{dir_path} is not a path to a directory")
+    return [
+        Path(dir_path, filename)
+        for filename in os.listdir(dir_path)
+        if os.path.isfile(os.path.join(dir_path, filename))
+    ]
+
+
+def is_file_or_dir(path: str) -> bool:
+    """Returns if the path provided is a file or a directory
+
+    Args:
+        path (str): OS path
+
+    Returns:
+        bool: if path is a file or directory
+    """
+    return os.path.isfile(path) or os.path.isdir(path)

@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import ray
@@ -34,7 +33,7 @@ app = typer.Typer()
 
 def download_dataset(dataset_loc: str, track_dataset: str, model_id: str) -> tuple[str, str]:
     # Convert local into W&B
-    if os.path.isfile(dataset_loc) and track_dataset:
+    if os_utils.is_file_or_dir(dataset_loc) and track_dataset:
         [status, name] = artifacts.process_dataset(
             dataset_loc=dataset_loc, data_type="raw_data", data_for_model_id=model_id
         )
@@ -47,10 +46,10 @@ def download_dataset(dataset_loc: str, track_dataset: str, model_id: str) -> tup
         return dataset_loc, name
 
     # Doing a simple local run
-    if os.path.isfile(dataset_loc) and not track_dataset:
+    if os_utils.is_file_or_dir(dataset_loc) and not track_dataset:
         return dataset_loc, None
 
-    # Verify is an artifact name
+    # Using dataset already in W&B and we get a dataset alias
     is_artifact_name = wb_utils.verify_artifact_name(dataset_loc)
     if not is_artifact_name:
         msg = "Artifact names should be a <name>:<alias> format. Check if your name is correct or if you instead want to only use a local dataset."

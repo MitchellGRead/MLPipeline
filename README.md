@@ -100,3 +100,8 @@ python pipeline/artifacts.py process-dataset \
     --dataset-loc "./data/labeled_projects.csv" \
     --data-type "raw_data" \
     --data-for-model-id "Tagifai_LLM_Model"
+
+python pipeline/artifacts.py process-dataset \
+    --dataset-loc "./data/test" \
+    --data-type "raw_data" \
+    --data-for-model-id "Tagifai_LLM_Model"

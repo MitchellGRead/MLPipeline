@@ -100,24 +100,29 @@ def process_dataset(
     Returns:
         tuple[bool, str]: boolean if the dataset processing was successful or not and the saved artifact name. Name is empty on failure.
     """
-    assert os.path.isfile(
-        dataset_loc
-    ), "Dataset processing only supports paths to a file currently."
+    if not os_utils.is_file_or_dir(dataset_loc):
+        msg = f"Data processing is only supported for paths to files or dirs -- {dataset_loc}"
+        logger.error(msg)
+        raise ValueError(msg)
 
-    filename = os_utils.get_file_name_from_path(dataset_loc)
+    pathname = os_utils.get_name_from_path(dataset_loc)
     run_id = wandb.util.generate_id()
     run_name = f"Dataset_{data_type}_{run_id}"
     model_project = model_registration.getModelProject(data_for_model_id)
 
     logger.info(
-        f"Processing {model_project.value} dataset from {dataset_loc} for file {filename}. W&B run name is {run_name}"
+        f"Processing {model_project.value} dataset from {dataset_loc} . W&B run name is {run_name}"
     )
 
     run = wandb.init(project=model_project.value, job_type=data_type, group="Data", name=run_name)
-    data_artifact = wandb.Artifact(name=filename, type=data_type)
+    data_artifact = wandb.Artifact(name=pathname, type=data_type)
 
     try:
-        data_artifact.add_file(dataset_loc)
+        if os.path.isdir(dataset_loc):
+            data_artifact.add_dir(dataset_loc)
+        elif os.path.isfile(dataset_loc):
+            data_artifact.add_file(dataset_loc)
+
         saved_artifact = run.log_artifact(data_artifact)
     except:  # noqa: E722
         logger.error(f"Failed to process dataset at {dataset_loc}")

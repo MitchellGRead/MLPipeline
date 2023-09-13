@@ -32,12 +32,11 @@ class DataHandlerInterface(ABC):
 
     @abc.abstractmethod
     def split_data(
-        self, data: Dataset, test_size: float, shuffle: bool = True, seed: int = 1234
+        self, test_size: float, shuffle: bool = True, seed: int = 1234
     ) -> tuple[Dataset, Dataset]:
         """Split data into train and eval datasets based on the stratify
 
         Args:
-            data (Dataset): data to split
             test_size (float): size of test data
             shuffle (bool, optional): whether to shuffle the data splits or not. Defaults to True.
             seed (int, optional): seed for shuffling. Defaults to 1234.
@@ -48,11 +47,10 @@ class DataHandlerInterface(ABC):
         pass
 
     @abc.abstractmethod
-    def add_to_config(self, data: Dataset, train_loop_config: dict) -> dict:
+    def add_to_config(self, train_loop_config: dict) -> dict:
         """Add any data specific configurations to the train loop config. This should primarily be done with the training data split
 
         Args:
-            data (Dataset): data to derive configurations from
             train_loop_config (dict): training loop config
 
         Returns:
