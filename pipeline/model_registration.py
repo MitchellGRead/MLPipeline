@@ -5,13 +5,15 @@ from ray.data import Preprocessor
 from ml.api.data_handler_interface import DataHandlerInterface
 from ml.api.metric_handler_interface import MetricHandlerInterface
 from ml.api.model_interface import ModelInterface
-from ml.data.tagifai import TagifaiDataHandler
+from ml.data_handler.complex_physics import ComplexPhysicsDataHandler
+from ml.data_handler.tagifai import TagifaiDataHandler
 from ml.metric.tagifai import TagifaiMetricHandler
 from ml.model.tagifai import TagifaiModel
 from ml.preprocessor.tagifai import TagifaiPreprocessor
 
 # Identifiable model ids for pipeline configuration
 tagifai_model_id = "Tagifai_LLM_Model"
+complex_gns_model_id = "Complex_Physics_GNS"
 
 
 class ModelProject(Enum):
@@ -43,7 +45,10 @@ pipeline_models: dict[str, dict[str, any]] = {
         TagifaiDataHandler,
         TagifaiMetricHandler,
         ModelProject.LLM,
-    )
+    ),
+    complex_gns_model_id: _create_model_entry(
+        None, None, ComplexPhysicsDataHandler, None, ModelProject.GNS
+    ),
 }
 
 
