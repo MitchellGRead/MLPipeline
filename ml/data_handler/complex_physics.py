@@ -65,13 +65,11 @@ class ComplexPhysicsDataHandler(DataHandlerInterface, IndexableDataset):
         window = self.windows[idx]
         size = window["size"]
 
-        particle_type = self.particle_type[
-            window["type"] : window["type"] + size  # noqa: E203
-        ].copy()
+        particle_type = self.particle_type[window["type"] : window["type"] + size].copy()
         particle_type = torch.from_numpy(particle_type)
 
         position_seq = self.position[
-            window["pos"] : window["pos"] + self.window_length * size * self.dim  # noqa: E203
+            window["pos"] : window["pos"] + self.window_length * size * self.dim
         ].copy()
         position_seq.resize(self.window_length, size, self.dim)  # list[list[list[float]]]
         position_seq = position_seq.transpose(1, 0, 2)
