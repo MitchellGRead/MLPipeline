@@ -1,3 +1,5 @@
+import json
+
 import ray
 from ray.data import Dataset
 
@@ -16,3 +18,9 @@ def load_csv_data(dataset_loc: str, num_samples: int = None) -> Dataset:
     ds = ds.random_shuffle(seed=1234)
     ds = ray.data.from_items(ds.take(num_samples)) if num_samples else ds
     return ds
+
+
+def load_dict(dataset_loc: str) -> dict:
+    with open(dataset_loc) as fp:
+        data = json.load(fp)
+    return data

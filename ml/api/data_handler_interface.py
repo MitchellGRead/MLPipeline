@@ -57,3 +57,32 @@ class DataHandlerInterface(ABC):
             dict: updated training loop config
         """
         pass
+
+
+class IndexableDataset(ABC):
+    """An indexable dataset to retrieve some collection of data
+
+    Args:
+        ABC (ABC): python Abstract Base Class (ABC) object
+    """
+
+    @abc.abstractmethod
+    def get(self, idx: int) -> dict[str, any]:
+        """Get an index of the dataset
+
+        Args:
+            idx (int): index to get
+
+        Returns:
+            dict[str, any]: data to return
+        """
+        pass
+
+    @abc.abstractmethod
+    def len(self) -> int:
+        """Get the length of the data
+
+        Returns:
+            int: data length
+        """
+        pass
