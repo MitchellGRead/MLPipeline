@@ -105,3 +105,10 @@ python pipeline/artifacts.py process-dataset \
     --dataset-loc "./data/test" \
     --data-type "raw_data" \
     --data-for-model-id "Tagifai_LLM_Model"
+
+```bash
+python pipeline/train.py gns-train-model \
+    --dataset-loc "./data/complex_physics/WaterDropSmall" \
+    --train-loop-config "./config/complex_physics_gns.json" \
+    --num-workers 2
+```
