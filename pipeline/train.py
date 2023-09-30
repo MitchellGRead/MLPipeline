@@ -481,4 +481,6 @@ if __name__ == "__main__":  # pragma: no cover, application
     # if ray.is_initialized():
     #     ray.shutdown()
     # ray.init()
+    os.environ["WANDB_API_KEY"] = os_utils.get_env_value("WEIGHT_AND_BIASES_API_KEY")
+    os.environ["WANDB_ENTITY"] = os_utils.get_env_value("WEIGTHS_AND_BIASES_ENTITY")
     app()
