@@ -21,5 +21,5 @@ setup(
     python_requires=">=3.10",
     install_requires=[required_packages],
     extras_require={"dev": docs_packages + style_packages + dev_packages, "docs": docs_packages},
-    packages=["ml", "data", "config", "pipeline"],
+    packages=["ml", "config", "pipeline"],
 )
