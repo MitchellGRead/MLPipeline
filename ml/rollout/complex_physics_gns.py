@@ -4,7 +4,7 @@ from ml.data_handler.complex_physics_gns import preprocess
 
 
 def rollout(model, data, metadata, noise_std):
-    # device = next(model.parameters()).device
+    device = next(model.parameters()).device
     model.eval()
     window_size = model.window_size + 1
     total_time = data["position"].size(0)
@@ -15,7 +15,7 @@ def rollout(model, data, metadata, noise_std):
     for time in range(total_time - window_size):
         with torch.no_grad():
             graph = preprocess(particle_type, traj[:, -window_size:], None, metadata, 0.0)
-            # graph = graph.to(device)
+            graph = graph.to(device)
             acceleration = model(graph).cpu()
             acceleration = acceleration * torch.sqrt(
                 torch.tensor(metadata["acc_std"]) ** 2 + noise_std**2

@@ -10,9 +10,9 @@ def oneStepMSE(simulator, dataloader, metadata, noise):
     batch_count = 0
     simulator.eval()
     with torch.no_grad():
-        scale = torch.sqrt(torch.tensor(metadata["acc_std"]) ** 2 + noise**2)  # .cuda()
+        scale = torch.sqrt(torch.tensor(metadata["acc_std"]) ** 2 + noise**2).cuda()
         for data in dataloader:
-            # data = data.cuda()
+            data = data.cuda()
             pred = simulator(data)
             mse = ((pred - data.y) * scale) ** 2
             mse = mse.sum(dim=-1).mean()
