@@ -10,7 +10,7 @@ from tqdm import tqdm
 from typing_extensions import Annotated
 
 import wandb
-from config.config import RESULTS_DIR, logger
+from config.config import RESULTS_DIR, WEIGHTS_AND_BIASES_PROJECT, logger
 from ml.data_handler.complex_physics_gns import OneStepDataset, RolloutDataset
 from ml.metric.complex_physics_gns import oneStepMSE, rolloutMSE
 from ml.model.complex_physics_gns import LearnedSimulator
@@ -27,15 +27,15 @@ def gns_train_model(
     train_loop_config: Annotated[
         str, typer.Option(help="Path to .json or stringified json object")
     ],
-    eval_interval: Annotated[int, typer.Option(help="Interval to eval during training")] = 100000,
+    eval_interval: Annotated[int, typer.Option(help="Interval to eval during training")] = 20000,
     vis_interval: Annotated[
         int, typer.Option(help="Interval to visualize during training")
-    ] = 100000,
+    ] = 20000,
     save_interval: Annotated[
         int, typer.Option(help="Interval to save artifacts during training")
-    ] = 100000,
+    ] = 20000,
     num_workers: Annotated[int, typer.Option(help="Number of workers for training")] = 2,
-    batch_size: Annotated[int, typer.Option(help="Batch size to compute data")] = 256,
+    batch_size: Annotated[int, typer.Option(help="Batch size to compute data")] = 2,
     seed: Annotated[int, typer.Option(help="Seed for reproducibility")] = 42,
     results_loc: Annotated[str, typer.Option(help="Path to results")] = RESULTS_DIR,
 ):
@@ -78,6 +78,7 @@ def gns_train_model(
     run_name = f"PygTrainer_{run_id}"
 
     run = wandb.init(
+        entity=WEIGHTS_AND_BIASES_PROJECT,
         project="GNS",
         job_type="train",
         group=model_to_train,
@@ -228,5 +229,5 @@ if __name__ == "__main__":  # pragma: no cover, application
     #     ray.shutdown()
     # ray.init()
     os.environ["WANDB_API_KEY"] = os_utils.get_env_value("WEIGHT_AND_BIASES_API_KEY")
-    os.environ["WANDB_ENTITY"] = os_utils.get_env_value("WEIGTHS_AND_BIASES_ENTITY")
+    os.environ["WANDB_USERNAME"] = os_utils.get_env_value("WEIGTHS_AND_BIASES_USERNAME")
     app()
