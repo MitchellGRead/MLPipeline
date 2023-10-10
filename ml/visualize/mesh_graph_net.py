@@ -93,6 +93,8 @@ def visualize(loader, best_model, stats_list, delta_t=0.01, skip=1):
     gs_data_loader = copy.deepcopy(loader)
     eval_data_loader = copy.deepcopy(loader)
     [mean_vec_x, std_vec_x, mean_vec_edge, std_vec_edge, mean_vec_y, std_vec_y] = stats_list
+
+    best_model.to(device)
     (mean_vec_x, std_vec_x, mean_vec_edge, std_vec_edge, mean_vec_y, std_vec_y) = (
         mean_vec_x.to(device),
         std_vec_x.to(device),
