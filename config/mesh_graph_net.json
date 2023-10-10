@@ -1,0 +1,8 @@
+{
+    "lr": 1e-3,
+    "weight_decay": 5e-4,
+    "scheduler_iters": 0,
+    "hidden_dim": 10,
+    "num_layers": 10,
+    "epoch": 5000
+}

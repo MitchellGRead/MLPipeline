@@ -12,8 +12,8 @@ module purge
 module load python/3.11
 source ./pipeline-venv/bin/activate
 
-python pipeline/train.py gns_train_model \
-    --dataset-loc "../224w-gns/Datasets/WaterDrop" \
-    --train-loop-config "./config/complex_physics_gns.json" \
+python pipeline/train.py mesh_train_model \
+    --dataset-loc "../meshgraphnets/MeshGraphNets_PyG/datasets/meshgraphnets_miniset30traj5ts_vis.pt" \
+    --train-loop-config "./config/mesh_graph_net.json" \
     --num-workers 2 \
     --batch-size 2
