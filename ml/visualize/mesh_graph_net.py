@@ -86,6 +86,7 @@ def visualize(loader, best_model, stats_list, delta_t=0.01, skip=1):
 
     best_model.eval()
     device = "cpu"  # vis only works on cpu
+    best_model.to(device)
     viz_data = {}
     gs_data = {}
     eval_data = {}

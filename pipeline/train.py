@@ -227,8 +227,8 @@ def mesh_train_model(
                 training_result_loc, f"mesh_graph_net-x_velocity-{run_name}.gif"
             )
             fps = 10
-            writergif = animation.PillowWriter(fps=fps)
-            anim.save(anim_path, writer=writergif, fps=fps)
+            # writergif = animation.PillowWriter(fps=fps)
+            anim.save(anim_path, writer="ffmpeg", fps=fps)
             run.log(
                 {
                     "rollout_video": wandb.Video(

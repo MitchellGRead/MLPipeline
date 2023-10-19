@@ -7,13 +7,15 @@
 #SBATCH --mail-user=<stevenbobyn@gmail.com>
 #SBATCH --mail-type=ALL
 
-cd ~/$projects/MLPipeline
+cd $def/MLPipeline
 module purge
 module load python/3.11
 source ./pipeline-venv/bin/activate
 
-python pipeline/train.py gns_train_model \
-    --dataset-loc "../224w-gns/Datasets/WaterDrop" \
+dataset=$1
+
+python pipeline/train.py gns-train-model \
+    --dataset-loc "./data/complex-physics/$dataset" \
     --train-loop-config "./config/complex_physics_gns.json" \
     --num-workers 2 \
     --batch-size 2
