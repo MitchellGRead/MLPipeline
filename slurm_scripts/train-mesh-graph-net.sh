@@ -12,7 +12,7 @@ module purge
 module load python/3.11
 source ./pipeline-venv/bin/activate
 
-python pipeline/train.py mesh_train_model \
+python pipeline/train.py mesh-train-model \
     --dataset-loc "../meshgraphnets/MeshGraphNets_PyG/datasets/meshgraphnets_miniset30traj5ts_vis.pt" \
     --train-loop-config "./config/mesh_graph_net.json" \
     --num-workers 2 \
