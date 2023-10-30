@@ -8,7 +8,6 @@ import torch.optim as optim
 import torch_geometric as pyg
 import torch_geometric.data as pyg_data
 import typer
-from matplotlib import animation
 from pipeline_utils import os_utils, rand_utils, time_utils
 from tqdm import tqdm, trange
 from typing_extensions import Annotated
@@ -27,6 +26,11 @@ from ml.visualize.complex_physics_gns import visualize_pair
 
 # Initialize Typer CLI app
 app = typer.Typer()
+
+os.environ["WANDB_API_KEY"] = os_utils.get_env_value("WEIGHT_AND_BIASES_API_KEY")
+os.environ["WANDB_USERNAME"] = os_utils.get_env_value("WEIGHT_AND_BIASES_USERNAME")
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def build_optimizer(
@@ -98,8 +102,6 @@ def mesh_train_model(
     train_loop_config["seed"] = seed
     train_loop_config["optimizer"] = optimizer
     train_loop_config["scheduler"] = scheduler
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     logger.info(
         f"Setting up training for {model_to_train} - Dataset location {dataset_loc} - Results saved to {training_result_loc} - Training config\n{json.dumps(train_loop_config, indent=2)}"
@@ -266,7 +268,7 @@ def gns_train_model(
     dataset_loc: Annotated[str, typer.Option(help="Path to dataset in local storage")],
     train_loop_config: Annotated[
         str, typer.Option(help="Path to .json or stringified json object")
-    ],
+    ] = None,
     eval_interval: Annotated[int, typer.Option(help="Interval to eval during training")] = 20000,
     vis_interval: Annotated[
         int, typer.Option(help="Interval to visualize during training")
